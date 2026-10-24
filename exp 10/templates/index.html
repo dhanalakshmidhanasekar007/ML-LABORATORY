@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skin Disease Image Classification Using Machine Learning</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Header Section -->
+    <header class="app-header">
+      <span class="badge-tag">Academic ML Project</span>
+      <h1 class="header-title">Skin Disease Image Classification Using Machine Learning</h1>
+      <p class="header-subtitle">
+        A deep learning computer vision system trained on authentic dermatoscopic skin lesion imagery from the 
+        <strong>International Skin Imaging Collaboration (ISIC HAM10000)</strong> archive. Demonstrates automated image preprocessing, 
+        convolutional feature learning, multi-class classification, and leak-free model evaluation.
+      </p>
+    </header>
+
+    <!-- Critical Educational Disclaimer Banner -->
+    <div class="disclaimer-banner">
+      <div class="disclaimer-icon">⚠️</div>
+      <div class="disclaimer-text">
+        <h4>Important Educational & Research Disclaimer</h4>
+        <p>
+          This application is strictly an educational computer science demonstration and an academic machine learning mini-project. 
+          <strong>It is NOT a medical device, nor a clinical diagnostic instrument.</strong> The predicted class label and model score reflect pattern 
+          similarity within a localized scientific benchmark dataset, not confirmed patient diagnoses. Any skin lesion concern requires evaluation by a licensed dermatologist or medical professional.
+        </p>
+      </div>
+    </div>
+
+    <!-- Section: Image Upload & Real-Time Classification Playground -->
+    <section class="card-section" id="playground">
+      <h2 class="section-heading">
+        <span>🔬</span> Interactive Image Classification
+      </h2>
+      <p class="section-subtext">
+        Select or drag a dermatoscopic skin image (JPG or PNG) to execute the automated preprocessing pipeline and obtain the convolutional model's classification score.
+      </p>
+
+      <div class="playground-container">
+        <!-- Upload Form Column -->
+        <div class="upload-column">
+          <form id="prediction-form" enctype="multipart/form-data">
+            <div class="upload-zone" id="drop-zone">
+              <div class="upload-icon">📁</div>
+              <div class="upload-prompt">Click to browse or drag & drop skin photograph</div>
+              <div class="upload-formats">Supported Formats: JPG, JPEG, PNG (Max 16 MB)</div>
+              <input type="file" id="file-input" name="image" accept=".jpg,.jpeg,.png">
+            </div>
+
+            <!-- Image Preview Box -->
+            <div class="preview-box" id="preview-box">
+              <img id="preview-img" src="" alt="Selected Skin Image Preview">
+              <div class="preview-meta" id="preview-meta">Image Ready for Processing</div>
+            </div>
+
+            <button type="submit" class="btn-primary" id="predict-btn" disabled>
+              <span id="btn-text">Run Model Prediction</span>
+            </button>
+          </form>
+
+          <!-- Quick Test Samples -->
+          {% if dataset_stats.sample_images %}
+          <div class="sample-section">
+            <div class="sample-title">Or Test With Benchmark Dataset Samples:</div>
+            <div class="sample-buttons">
+              {% for s in dataset_stats.sample_images %}
+              <button type="button" class="sample-btn" data-path="{{ s.rel_path }}">
+                {{ s.class_name.replace('_', ' ') }}
+              </button>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Result Display Column -->
+        <div class="result-column">
+          <div class="result-panel" id="result-panel">
+            <div class="result-empty" id="result-empty">
+              <div style="font-size: 2.2rem; margin-bottom: 0.5rem; opacity: 0.4;">📊</div>
+              <p>Upload a skin image and click <strong>"Run Model Prediction"</strong> to view classification results.</p>
+            </div>
+
+            <div class="result-card" id="result-card">
+              <div class="prediction-highlight">
+                <div class="prediction-label-title">Predicted Dataset Class</div>
+                <div class="prediction-class-name" id="pred-class-name">—</div>
+                <div class="prediction-score">Model Score: <span id="pred-score">—</span></div>
+              </div>
+
+              <div style="margin-bottom: 1rem; font-size: 0.82rem; color: var(--text-muted);">
+                <div><strong>Original Resolution:</strong> <span id="res-orig-dim">—</span></div>
+                <div><strong>Model Input Tensor:</strong> <span id="res-prep-dim">128 × 128 × 3 (RGB, [0, 1])</span></div>
+              </div>
+
+              <h4 style="font-size: 0.88rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem;">
+                Class Softmax Score Distribution
+              </h4>
+              <ul class="prob-list" id="prob-list"></ul>
+
+              <p style="font-size: 0.78rem; color: var(--text-subtle); margin-top: 1rem; font-style: italic;" id="result-disclaimer">
+                Note: The model score represents the softmax output activation across the 4 trained dataset classes, not an absolute clinical probability.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Dataset Overview -->
+    <section class="card-section" id="dataset">
+      <h2 class="section-heading">
+        <span>📂</span> Fig. 1 — Dataset Overview & Class Distribution
+      </h2>
+      <p class="section-subtext">
+        Trained on the standardized <strong>HAM10000 collection</strong> hosted on the <strong>ISIC Archive</strong> under the Creative Commons 
+        Attribution-NonCommercial 4.0 (CC BY-NC 4.0) license. The dataset comprises 400 verified dermoscopic images balanced evenly across 4 disease classes.
+      </p>
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-val">{{ dataset_stats.total_images }}</div>
+          <div class="kpi-title">Total Benchmark Images</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-val">{{ dataset_stats.classes|length }}</div>
+          <div class="kpi-title">Supported Classes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-val">128 × 128</div>
+          <div class="kpi-title">Standardized Resolution</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-val">ISIC Archive</div>
+          <div class="kpi-title">Dataset Source</div>
+        </div>
+      </div>
+
+      <!-- Class Cards Grid -->
+      <div class="grid-4" style="margin-bottom: 1.5rem;">
+        {% for c_name, count in dataset_stats.classes.items() %}
+        <div class="class-card">
+          <div class="class-card-header">
+            <span class="class-name">{{ c_name.replace('_', ' ') }}</span>
+            <span class="class-count">{{ count }} images</span>
+          </div>
+          <p class="class-desc">{{ class_descriptions.get(c_name, 'Supported dermatological disease category in the trained dataset.') }}</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Overview Plot Display -->
+      <div class="plot-card">
+        <img src="{{ url_for('static', filename='plots/fig1_dataset_overview.png') }}" alt="Fig. 1 — Dataset Overview">
+        <div class="plot-caption">Fig. 1 — Dataset Class Distribution (ISIC HAM10000 Scientific Collection)</div>
+      </div>
+    </section>
+
+    <!-- Section: Image Preprocessing Pipeline -->
+    <section class="card-section" id="preprocessing">
+      <h2 class="section-heading">
+        <span>🔄</span> Fig. 2 — Image Preprocessing Pipeline
+      </h2>
+      <p class="section-subtext">
+        Rigorous preprocessing transforms raw, variable-sized clinical photographs into normalized tensors ready for convolutional feature extraction:
+      </p>
+
+      <div class="grid-2" style="margin-bottom: 1.5rem;">
+        <div style="background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius-md);">
+          <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary);">
+            Preprocessing Steps:
+          </h4>
+          <ol style="margin-left: 1.25rem; font-size: 0.88rem; color: var(--text-muted); line-height: 1.7;">
+            <li><strong>Folder & Class Detection:</strong> Dynamically loads images organized in directory hierarchy.</li>
+            <li><strong>RGB Enforcement:</strong> Ensures 3 color channels, discarding unnecessary alpha channels.</li>
+            <li><strong>Resolution Standardization:</strong> Resizes images using bilinear interpolation to 128 × 128 pixels.</li>
+            <li><strong>Tensor Normalization:</strong> Scales pixel values from [0, 255] into continuous float [0.0, 1.0].</li>
+            <li><strong>Data Leakage Prevention:</strong> Groups images by lesion/patient ID so train and test sets remain strictly disjoint.</li>
+          </ol>
+        </div>
+
+        <div style="background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius-md);">
+          <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--accent-teal);">
+            Training-Time Data Augmentation:
+          </h4>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+            To enhance generalization across skin tones, rotations, and lesion orientations, the following transformations are applied exclusively during training:
+          </p>
+          <ul style="margin-left: 1.25rem; font-size: 0.88rem; color: var(--text-muted); line-height: 1.7;">
+            <li>Random Horizontal & Vertical Flips</li>
+            <li>Random Rotation (up to 12% range)</li>
+            <li>Random Zoom (up to 10% factor)</li>
+            <li>Validation and Test sets remain strictly unaltered.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="plot-card">
+        <img src="{{ url_for('static', filename='plots/fig2_preprocessing.png') }}" alt="Fig. 2 — Image Preprocessing Pipeline">
+        <div class="plot-caption">Fig. 2 — Step-by-Step Preprocessing: Original Dermoscopic Image → Resized Image → Normalized Float Tensor</div>
+      </div>
+    </section>
+
+    <!-- Section: Model Training & Convergence -->
+    <section class="card-section" id="training">
+      <h2 class="section-heading">
+        <span>📈</span> Fig. 3 — CNN Model Architecture & Training Progress
+      </h2>
+      <p class="section-subtext">
+        The primary model utilizes a deep convolutional architecture fine-tuned on the dermatoscopy dataset using Adam optimization and Categorical Crossentropy loss.
+      </p>
+
+      <div class="plot-card">
+        <img src="{{ url_for('static', filename='plots/fig3_training_curves.png') }}" alt="Fig. 3 — Training Curves">
+        <div class="plot-caption">Fig. 3 — CNN Training & Validation Curves (Accuracy vs. Epochs and Loss vs. Epochs)</div>
+      </div>
+    </section>
+
+    <!-- Section: Model Evaluation & Performance Metrics -->
+    <section class="card-section" id="evaluation">
+      <h2 class="section-heading">
+        <span>🎯</span> Fig. 4 — Model Evaluation on Held-Out Test Data
+      </h2>
+      <p class="section-subtext">
+        All performance metrics are computed strictly on the held-out test partition (60 images, 15% of dataset) with zero patient or lesion overlap.
+      </p>
+
+      {% if metrics %}
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-val">{{ "%.2f"|format(metrics.test_accuracy * 100) }}%</div>
+          <div class="kpi-title">Held-Out Test Accuracy</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-val">{{ "%.2f"|format(metrics.macro_f1 * 100) }}%</div>
+          <div class="kpi-title">Macro F1-Score</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-val">{{ "%.2f"|format(metrics.macro_precision * 100) }}%</div>
+          <div class="kpi-title">Macro Precision</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-val">{{ "%.2f"|format(metrics.macro_recall * 100) }}%</div>
+          <div class="kpi-title">Macro Recall</div>
+        </div>
+      </div>
+
+      <!-- Per-Class Metrics Table -->
+      <div class="metrics-table-wrapper">
+        <table class="academic-table">
+          <thead>
+            <tr>
+              <th>Disease Class</th>
+              <th>Precision</th>
+              <th>Recall</th>
+              <th>F1-Score</th>
+              <th>Test Support</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c_name, vals in metrics.per_class.items() %}
+            <tr>
+              <td><strong>{{ c_name.replace('_', ' ') }}</strong></td>
+              <td>{{ "%.2f"|format(vals.precision * 100) }}%</td>
+              <td>{{ "%.2f"|format(vals.recall * 100) }}%</td>
+              <td>{{ "%.2f"|format(vals.f1_score * 100) }}%</td>
+              <td>{{ vals.support }} images</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      <div class="grid-2" style="margin-top: 1.5rem;">
+        <div class="plot-card">
+          <img src="{{ url_for('static', filename='plots/fig4_confusion_matrix.png') }}" alt="Fig. 4a — Confusion Matrix">
+          <div class="plot-caption">Fig. 4a — Test Set Confusion Matrix (True vs. Predicted Labels)</div>
+        </div>
+        <div class="plot-card">
+          <img src="{{ url_for('static', filename='plots/fig4_class_performance.png') }}" alt="Fig. 4b — Class Performance">
+          <div class="plot-caption">Fig. 4b — Per-Class Performance Summary (Precision, Recall, F1)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Prediction History Log (SQLite Database) -->
+    <section class="card-section" id="history-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+        <h2 class="section-heading" style="margin-bottom: 0;">
+          <span>📋</span> Fig. 12 — Prediction History Log (SQLite Database)
+        </h2>
+        <div>
+          <button type="button" class="sample-btn" id="refresh-history-btn">🔄 Refresh</button>
+          <button type="button" class="sample-btn" id="clear-history-btn" style="color: var(--danger);">🗑️ Clear History</button>
+        </div>
+      </div>
+      <p class="section-subtext">
+        Every inference record (filename, predicted disease class, model confidence score, and timestamp) is persisted in the local SQLite database (<code>database/skin_disease.db</code>) for diagnostic auditing and record-keeping.
+      </p>
+
+      <div class="metrics-table-wrapper">
+        <table class="academic-table" id="history-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Image File</th>
+              <th>Predicted Disease Class</th>
+              <th>Model Confidence</th>
+              <th>Logged Date & Time</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            {% if history %}
+              {% for h in history %}
+              <tr>
+                <td>#{{ h.id }}</td>
+                <td><code>{{ h.filename }}</code></td>
+                <td><span class="badge-tag" style="margin: 0;">{{ h.prediction.replace('_', ' ') }}</span></td>
+                <td><strong>{{ h.confidence }}%</strong></td>
+                <td>{{ h.created_at }}</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr id="empty-history-row">
+                <td colspan="5" style="text-align: center; color: var(--text-subtle); padding: 1.5rem;">
+                  No prediction records logged yet. Upload an image above to record inference history.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p><strong>Skin Disease Image Classification Using Machine Learning</strong> — Academic & Mini-Project Implementation</p>
+      <p style="margin-top: 0.25rem;">Built with Python, Flask, TensorFlow / Keras, NumPy, Scikit-learn, and Pillow.</p>
+    </footer>
+
+  </div>
+
+  <!-- JavaScript for Interactive Upload, Preview, and Prediction -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const dropZone = document.getElementById("drop-zone");
+      const fileInput = document.getElementById("file-input");
+      const previewBox = document.getElementById("preview-box");
+      const previewImg = document.getElementById("preview-img");
+      const previewMeta = document.getElementById("preview-meta");
+      const predictBtn = document.getElementById("predict-btn");
+      const btnText = document.getElementById("btn-text");
+      const form = document.getElementById("prediction-form");
+
+      const resultEmpty = document.getElementById("result-empty");
+      const resultCard = document.getElementById("result-card");
+      const predClassName = document.getElementById("pred-class-name");
+      const predScore = document.getElementById("pred-score");
+      const resOrigDim = document.getElementById("res-orig-dim");
+      const probList = document.getElementById("prob-list");
+
+      // File select trigger
+      dropZone.addEventListener("click", () => fileInput.click());
+
+      // Drag and drop events
+      ["dragenter", "dragover"].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add("dragover");
+        });
+      });
+
+      ["dragleave", "drop"].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove("dragover");
+        });
+      });
+
+      dropZone.addEventListener("drop", (e) => {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          fileInput.files = files;
+          handleFileSelect(files[0]);
+        }
+      });
+
+      fileInput.addEventListener("change", function () {
+        if (this.files.length > 0) {
+          handleFileSelect(this.files[0]);
+        }
+      });
+
+      function handleFileSelect(file) {
+        if (!file.type.match("image.*")) {
+          alert("Please select an image file (JPG, JPEG, or PNG).");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          previewImg.src = e.target.result;
+          previewBox.style.display = "block";
+          previewMeta.innerText = `Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+          predictBtn.disabled = false;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Handle Form Submit
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (!fileInput.files || fileInput.files.length === 0) return;
+
+        const formData = new FormData();
+        formData.append("image", fileInput.files[0]);
+
+        executePrediction("/predict", {
+          method: "POST",
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+          body: formData
+        });
+      });
+
+      // Benchmark Sample Quick Pick Buttons
+      document.querySelectorAll(".sample-btn").forEach(btn => {
+        btn.addEventListener("click", function () {
+          const samplePath = this.getAttribute("data-path");
+          previewBox.style.display = "block";
+          previewImg.src = "/" + samplePath;
+          previewMeta.innerText = `Benchmark Sample: ${samplePath}`;
+          predictBtn.disabled = true;
+
+          executePrediction(`/sample-predict/${encodeURIComponent(samplePath)}`, {
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+          });
+        });
+      });
+
+      function executePrediction(url, options) {
+        // UI loading state
+        btnText.innerHTML = '<span class="spinner"></span> Analyzing Image...';
+        predictBtn.disabled = true;
+
+        fetch(url, options)
+          .then(res => res.json())
+          .then(data => {
+            btnText.innerText = "Run Model Prediction";
+            predictBtn.disabled = false;
+
+            if (!data.success) {
+              alert("Prediction Error: " + (data.error || "Unable to classify image."));
+              return;
+            }
+
+            // Display Results
+            resultEmpty.style.display = "none";
+            resultCard.style.display = "block";
+
+            predClassName.innerText = data.predicted_display;
+            predScore.innerText = data.model_score;
+            resOrigDim.innerText = data.orig_dimensions;
+
+            // Render Probability Bars
+            probList.innerHTML = "";
+            data.breakdown.forEach(item => {
+              const li = document.createElement("li");
+              li.className = "prob-item" + (item.is_top ? " is-top" : "");
+              li.innerHTML = `
+                <div class="prob-header">
+                  <span>${item.display_name}</span>
+                  <span>${item.probability.toFixed(2)}%</span>
+                </div>
+                <div class="prob-bar-bg">
+                  <div class="prob-bar-fill" style="width: ${item.probability}%;"></div>
+                </div>
+              `;
+              probList.appendChild(li);
+            });
+
+            // Refresh History Table
+            fetchHistory();
+          })
+          .catch(err => {
+            btnText.innerText = "Run Model Prediction";
+            predictBtn.disabled = false;
+            console.error("Prediction request failed:", err);
+            alert("Network or inference error occurred.");
+          });
+      }
+      function fetchHistory() {
+        fetch("/api/history")
+          .then(res => res.json())
+          .then(data => {
+            if (!data.success) return;
+            const tbody = document.getElementById("history-tbody");
+            if (!data.history || data.history.length === 0) {
+              tbody.innerHTML = `
+                <tr id="empty-history-row">
+                  <td colspan="5" style="text-align: center; color: var(--text-subtle); padding: 1.5rem;">
+                    No prediction records logged yet. Upload an image above to record inference history.
+                  </td>
+                </tr>
+              `;
+              return;
+            }
+            tbody.innerHTML = data.history.map(h => `
+              <tr>
+                <td>#${h.id}</td>
+                <td><code>${h.filename}</code></td>
+                <td><span class="badge-tag" style="margin: 0;">${h.prediction.replace('_', ' ')}</span></td>
+                <td><strong>${h.confidence}%</strong></td>
+                <td>${h.created_at}</td>
+              </tr>
+            `).join("");
+          })
+          .catch(err => console.error("History fetch error:", err));
+      }
+
+      document.getElementById("refresh-history-btn").addEventListener("click", fetchHistory);
+
+      document.getElementById("clear-history-btn").addEventListener("click", function() {
+        if (!confirm("Are you sure you want to clear the diagnostic history log?")) return;
+        fetch("/api/history/clear", { method: "POST" })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) fetchHistory();
+          });
+      });
+    });
+  </script>
+</body>
+</html>
