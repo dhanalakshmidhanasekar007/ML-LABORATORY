@@ -1,0 +1,20 @@
+{
+  "classes": [
+    "Basal_Cell_Carcinoma",
+    "Benign_Keratosis",
+    "Melanocytic_Nevus",
+    "Melanoma"
+  ],
+  "class_to_idx": {
+    "Basal_Cell_Carcinoma": 0,
+    "Benign_Keratosis": 1,
+    "Melanocytic_Nevus": 2,
+    "Melanoma": 3
+  },
+  "idx_to_class": {
+    "0": "Basal_Cell_Carcinoma",
+    "1": "Benign_Keratosis",
+    "2": "Melanocytic_Nevus",
+    "3": "Melanoma"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "dataset_source": "ISIC Archive (HAM10000 Scientific Collection)",
+  "license": "Creative Commons Attribution-NonCommercial 4.0 (CC BY-NC 4.0)",
+  "classes": [
+    "Basal_Cell_Carcinoma",
+    "Benign_Keratosis",
+    "Melanocytic_Nevus",
+    "Melanoma"
+  ],
+  "architecture": "MOBILENET",
+  "test_accuracy": 0.5166666666666667,
+  "macro_precision": 0.5416666666666666,
+  "macro_recall": 0.547165991902834,
+  "macro_f1": 0.5182680223002804,
+  "weighted_f1": 0.4911070112683016,
+  "per_class": {
+    "Basal_Cell_Carcinoma": {
+      "precision": 0.8888888888888888,
+      "recall": 0.6153846153846154,
+      "f1_score": 0.7272727272727273,
+      "support": 13
+    },
+    "Benign_Keratosis": {
+      "precision": 0.5,
+      "recall": 0.8,
+      "f1_score": 0.6153846153846154,
+      "support": 15
+    },
+    "Melanocytic_Nevus": {
+      "precision": 0.4444444444444444,
+      "recall": 0.6153846153846154,
+      "f1_score": 0.5161290322580645,
+      "support": 13
+    },
+    "Melanoma": {
+      "precision": 0.3333333333333333,
+      "recall": 0.15789473684210525,
+      "f1_score": 0.21428571428571427,
+      "support": 19
+    }
+  },
+  "confusion_matrix": [
+    [
+      8,
+      2,
+      0,
+      3
+    ],
+    [
+      1,
+      12,
+      1,
+      1
+    ],
+    [
+      0,
+      3,
+      8,
+      2
+    ],
+    [
+      0,
+      7,
+      9,
+      3
+    ]
+  ],
+  "classification_report_str": "                      precision    recall  f1-score   support\n\nBasal_Cell_Carcinoma       0.89      0.62      0.73        13\n    Benign_Keratosis       0.50      0.80      0.62        15\n   Melanocytic_Nevus       0.44      0.62      0.52        13\n            Melanoma       0.33      0.16      0.21        19\n\n            accuracy                           0.52        60\n           macro avg       0.54      0.55      0.52        60\n        weighted avg       0.52      0.52      0.49        60\n",
+  "test_sample_count": 60,
+  "img_size": [
+    128,
+    128
+  ]
+}
